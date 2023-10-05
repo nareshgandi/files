@@ -1,0 +1,27 @@
+dnf install bcache-tools
+make-bcache -C /dev/sda
+
+make-bcache -B /dev/sdb
+sudo mkfs.ext4 /dev/bcache0
+sudo mkdir /mnt/bcache
+sudo mount /dev/bcache0 /mnt/bcache
+
+echo '/dev/bcache0 /mnt/bcache ext4 defaults 0 0' | sudo tee -a /etc/fstab
+
+
+sudo nano /etc/rc.d/rc.local
+
+echo 1 > /sys/fs/bcache/register
+sudo chmod +x /etc/rc.d/rc.local
+cat /sys/block/bcache0/bcache/state
+
+
+https://github.com/g2p/bcache-tools
+https://wenchun-tw.github.io/2018/04/17/Hyper-HD-Bcache-%E5%BB%BA%E7%BD%AE%E9%81%8E%E7%A8%8B/
+https://goodcommand.readthedocs.io/zh_CN/latest/command/bcache.html
+https://ypdai.github.io/2018/07/13/bcache%E9%85%8D%E7%BD%AE%E4%BD%BF%E7%94%A8/
+
+http://www.yangguanjun.com/2018/03/26/lvm-sata-ssd-bcache/
+https://rudeigerc.dev/posts/bcache/
+http://www.yangguanjun.com/2018/03/26/lvm-sata-ssd-bcache/
+https://ypdai.github.io/2018/07/13/bcache%E9%85%8D%E7%BD%AE%E4%BD%BF%E7%94%A8/
