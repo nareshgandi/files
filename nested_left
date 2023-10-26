@@ -1,0 +1,33 @@
+CREATE TABLE orders (
+  order_id serial PRIMARY KEY,
+  order_date date,
+  customer_id int
+);
+
+-- Generate a million records for orders
+INSERT INTO orders (order_date, customer_id)
+SELECT
+  CURRENT_DATE - (i || ' days')::INTERVAL,
+  (i % 1000) + 1
+FROM generate_series(1, 1000000) i;
+
+CREATE TABLE order_items (
+  item_id serial PRIMARY KEY,
+  order_id int,
+  product_id int
+);
+
+-- Generate a million records for order_items
+INSERT INTO order_items (order_id, product_id)
+SELECT
+  (i % 1000000) + 1,
+  (i % 100) + 1
+FROM generate_series(1, 1000000) i;
+
+
+
+explain analyze SELECT o.order_id, o.order_date, o.customer_id, oi.product_id
+FROM orders o
+LEFT JOIN order_items oi ON o.order_id = oi.order_id
+LIMIT 100; -- Adjust the limit as needed
+
