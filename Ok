@@ -1,0 +1,24 @@
+CREATE OR REPLACE FUNCTION check_max_locks_and_connections()
+RETURNS VOID AS $$
+DECLARE
+    max_locks_per_transaction_value integer;
+    max_connections_value integer;
+BEGIN
+    -- Get the current values of max_locks_per_transaction and max_connections
+    SELECT current_setting('max_locks_per_transaction')::integer INTO max_locks_per_transaction_value;
+    SELECT current_setting('max_connections')::integer INTO max_connections_value;
+
+    -- Check the conditions and display messages
+    IF max_connections_value > 1000 THEN
+        RAISE WARNING 'max_connections is greater than 1000: %', max_connections_value;
+    END IF;
+
+    IF max_locks_per_transaction_value > 1000 THEN
+        RAISE WARNING 'max_locks_per_transaction is greater than 1000: %', max_locks_per_transaction_value;
+    END IF;
+
+    IF max_connections_value <= 1000 AND max_locks_per_transaction_value <= 1000 THEN
+        RAISE NOTICE 'Both max_connections and max_locks_per_transaction are below 1000. Status: Success';
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
