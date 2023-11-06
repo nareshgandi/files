@@ -64,3 +64,47 @@ BEGIN
 
     RAISE NOTICE 'Script completed successfully.';
 END $$;
+
+
+
+
+
+
+DO $$ 
+DECLARE
+    table_name text;
+    iterations integer := 3; -- Number of iterations
+    current_iteration integer := 0;
+BEGIN
+    -- Create a cursor to iterate through tables and their indexes
+    FOR table_name IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public') 
+    LOOP
+        WHILE current_iteration < iterations LOOP
+            -- Increment the current_iteration counter
+            current_iteration := current_iteration + 1;
+
+            RAISE NOTICE 'Iteration % of %', current_iteration, iterations;
+
+            RAISE NOTICE 'Prewarming table: %', table_name;
+
+            -- Prewarm the table by reading all its pages into memory
+            PERFORM pg_prewarm.table(table_name);
+
+            -- Prewarm indexes for the table
+            RAISE NOTICE 'Prewarming indexes for table: %', table_name;
+            FOR idx_name IN (SELECT indexname FROM pg_indexes WHERE tablename = table_name)
+            LOOP
+                RAISE NOTICE 'Prewarming index: %', idx_name;
+                PERFORM pg_prewarm.index(idx_name);
+            END LOOP;
+
+            -- Sleep for a few seconds (optional) to allow the system to settle
+            PERFORM pg_sleep(5); -- Adjust the duration as needed
+        END LOOP;
+
+        -- Reset the current_iteration for the next table
+        current_iteration := 0;
+    END LOOP;
+
+    RAISE NOTICE 'Script completed successfully.';
+END $$;
