@@ -68,3 +68,48 @@ BEGIN
     END IF;
 END;
 $$ LANGUAGE plpgsql;
+
+
+
+CREATE OR REPLACE FUNCTION check_configuration_settings()
+RETURNS VOID AS $$
+DECLARE
+    max_locks_per_transaction_value integer;
+    max_connections_value integer;
+    shared_buffers_value text;
+    work_mem_value text;
+BEGIN
+    -- Get the current values of max_locks_per_transaction, max_connections, shared_buffers, and work_mem
+    SELECT current_setting('max_locks_per_transaction')::integer INTO max_locks_per_transaction_value;
+    SELECT current_setting('max_connections')::integer INTO max_connections_value;
+    SELECT current_setting('shared_buffers') INTO shared_buffers_value;
+    SELECT current_setting('work_mem') INTO work_mem_value;
+
+    -- Display the current values of the settings
+    RAISE NOTICE 'Current max_locks_per_transaction: %', max_locks_per_transaction_value;
+    RAISE NOTICE 'Current max_connections: %', max_connections_value;
+    RAISE NOTICE 'Current shared_buffers: %', shared_buffers_value;
+    RAISE NOTICE 'Current work_mem: %', work_mem_value;
+
+    -- Check and display warnings or success
+    IF max_connections_value > 1000 THEN
+        RAISE WARNING 'max_connections is greater than 1000: %', max_connections_value;
+    END IF;
+
+    IF max_locks_per_transaction_value > 1000 THEN
+        RAISE WARNING 'max_locks_per_transaction is greater than 1000: %', max_locks_per_transaction_value;
+    END IF;
+
+    IF shared_buffers_value > '1GB' THEN
+        RAISE WARNING 'shared_buffers is greater than 1GB: %', shared_buffers_value;
+    END IF;
+
+    IF work_mem_value > '128MB' THEN
+        RAISE WARNING 'work_mem is greater than 128MB: %', work_mem_value;
+    END IF;
+
+    IF max_connections_value <= 1000 AND max_locks_per_transaction_value <= 1000 AND shared_buffers_value = '1GB' AND work_mem_value = '128MB' THEN
+        RAISE NOTICE 'All settings are within the desired limits. Status: Success';
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
