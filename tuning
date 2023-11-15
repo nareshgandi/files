@@ -43,3 +43,35 @@ where exists(  -- this line was changed from in to exists
   and outerUsers.city = '10_city'
   limit 500
 ;
+
+
+query 1
+
+select *
+from sales outerSales
+where exists(
+              select true
+              from sales innerSales
+                       join users innerUsers on innerSales.users_id = innerUsers.id
+              where innerUsers.surname like '%5%sur%'
+                and innerSales.currency = 'dollar'
+    )
+  and outerSales.selling_price > 10 and outerSales.selling_price < 50
+order by outerSales.id
+limit 5;
+
+
+query 2
+
+select *
+from sales outerSales
+where exists(
+              select true
+              from sales innerSales
+                       join users innerUsers on innerSales.users_id = innerUsers.id
+              where innerUsers.surname like '%5%sur%'
+                and innerSales.currency = 'dollar'
+                and outerSales.selling_price > 10 and outerSales.selling_price < 50
+          )
+order by outerSales.id
+limit 5;
