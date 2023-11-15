@@ -75,3 +75,5 @@ where exists(
           )
 order by outerSales.id
 limit 5;
+
+https://github.com/timmalich/postgresql-query-tuning-for-dummies/tree/main
