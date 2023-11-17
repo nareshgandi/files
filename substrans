@@ -77,4 +77,8 @@ CREATE TABLE subtransslru_test (
     data VARCHAR(50)
 );
 
-
+while true; 
+do 
+psql -t -c "select count(1), query, wait_event_type, wait_event from pg_stat_activity where wait_event_type='Lock' or wait_event in ('SubtransBuffer','SubtransSLRU') group by query, wait_event_type, wait_event; select now();" 2>&1 > okkk.log  
+sleep 2; 
+done  &
