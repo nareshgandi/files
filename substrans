@@ -1,0 +1,80 @@
+select count(1), query, wait_event_type, wait_event from pg_stat_activity where wait_event_type='Lock' or wait_event in ('SubtransBuffer','SubtransSLRU') group by query, wait_event_type, wait_event;
+
+select pid, query, wait_event_type, wait_event from pg_stat_activity where wait_event_type='Lock' or wait_event in ('SubtransBuffer','SubtransSLRU');
+
+postgres=# select count(1), query, wait_event_type, wait_event from pg_stat_activity where wait_event_type='Lock' or wait_event in ('SubtransBuffer','SubtransSLRU') group by query, wait_event_type, wait_event;
+ count |                      query                       | wait_event_type |   wait_event
+-------+--------------------------------------------------+-----------------+----------------
+     1 | update subtransslru_test set data='A';           | Lock            | transactionid
+     1 | autovacuum: VACUUM facturation.subtransslru_test | LWLock          | SubtransSLRU
+    47 | select simulate_subtransslru_workload();         | LWLock          | SubtransBuffer
+    28 | select simulate_subtransslru_workload();         | LWLock          | SubtransSLRU
+(4 rows)
+
+postgres=#
+
+CREATE OR REPLACE FUNCTION facturation.simulate_subtransslru_workload()
+ RETURNS void
+ LANGUAGE plpgsql
+AS $function$
+DECLARE
+    i INT := 1;
+    max_id INT;
+BEGIN
+    WHILE i <= 1000 LOOP
+        -- Start a transaction
+        BEGIN
+            -- Insert into the test table
+            INSERT INTO subtransslru_test (data) VALUES ('Transaction ' || i);
+
+            -- Fetch the maximum id from the table
+            SELECT count(*) INTO max_id FROM subtransslru_test;
+
+            -- Start a subtransaction
+                        BEGIN
+                                                EXCEPTION
+                                                WHEN OTHERS THEN
+                                                RAISE NOTICE 'Subtransaction error: %', SQLERRM;
+                                                BEGIN
+                                                EXCEPTION
+                                                WHEN OTHERS THEN
+                                                RAISE NOTICE 'Subtransaction error: %', SQLERRM;
+                                                        BEGIN
+                                                        EXCEPTION
+                                                WHEN OTHERS THEN
+                                                RAISE NOTICE 'Subtransaction error: %', SQLERRM;
+                                                END;
+                                        END;
+                                END;
+                        BEGIN
+                -- Update the inserted record
+                UPDATE subtransslru_test SET data = 'Updated ' || i WHERE id = max_id;
+
+                -- Select from the table without storing the result
+                PERFORM * FROM subtransslru_test WHERE id = max_id;
+            EXCEPTION
+                -- Handle subtransaction errors
+                WHEN OTHERS THEN
+                    -- Log the error or take other appropriate actions
+                    RAISE NOTICE 'Subtransaction error: %', SQLERRM;
+            END;
+
+            -- Commit the transaction (implicit commit)
+        EXCEPTION
+            -- Handle transaction errors
+            WHEN OTHERS THEN
+                -- Log the error or take other appropriate actions
+                RAISE NOTICE 'Transaction error: %', SQLERRM;
+        END;
+
+        -- Increment the counter
+        i := i + 1;
+        END LOOP;
+END;
+
+CREATE TABLE subtransslru_test (
+    id SERIAL PRIMARY KEY,
+    data VARCHAR(50)
+);
+
+
