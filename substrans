@@ -1,3 +1,8 @@
+
+https://postgrespro.com/list/thread-id/2566749
+
+select event, sum(count) from pg_wait_sampling_profile group by 1 order by 2 desc limit 20;
+
 select count(1), query, wait_event_type, wait_event from pg_stat_activity where wait_event_type='Lock' or wait_event in ('SubtransBuffer','SubtransSLRU') group by query, wait_event_type, wait_event;
 
 select pid, query, wait_event_type, wait_event from pg_stat_activity where wait_event_type='Lock' or wait_event in ('SubtransBuffer','SubtransSLRU');
