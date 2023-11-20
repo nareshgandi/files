@@ -1,4 +1,15 @@
+** working
+#!/bin/bash
 
+start_time=$(date +%s);
+
+while [ $(( $(date +%s) - start_time )) -lt $((7*24*3600)) ];
+do
+psql -f rca.sql >> "output_$(date +"%Y%m%d%H").log"
+sleep 5s;
+done
+
+***
 
 Certainly, you can modify the script to run the command at a 5-second interval, append the log to the same file for one hour, and then create a new log file for the next hour. Here's the modified script:
 
