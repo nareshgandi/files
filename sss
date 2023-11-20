@@ -1,4 +1,42 @@
 
+
+Certainly, you can modify the script to run the command at a 5-second interval, append the log to the same file for one hour, and then create a new log file for the next hour. Here's the modified script:
+
+```bash
+#!/bin/bash
+
+# Set the duration of the script (3 days)
+duration=$((3 * 24 * 60 * 60))
+
+# Start timestamp
+start_time=$(date +"%Y%m%d%H%M%S")
+
+# Main loop
+while [ $SECONDS -lt $duration ]; do
+    # Generate a new filename based on current timestamp
+    output_file="output_$(date +"%Y%m%d%H%M%S").log"
+    
+    # Run your command every 5 seconds and append output to the same file
+    for ((i=0; i<720; i++)); do  # 720 iterations for one hour (3600 seconds / 5 seconds per iteration)
+        your_command >> "$output_file"
+        sleep 5
+    done
+    
+    # Sleep for the remainder of the hour
+    sleep $((3600 % 5))
+done
+```
+
+Explanation:
+
+- The inner loop runs your command every 5 seconds for 720 iterations, which corresponds to one hour (`3600 seconds / 5 seconds per iteration`).
+- The output is appended to the same file (`>>`).
+- After one hour, a new log file is created based on the current timestamp.
+
+Save, make executable, and run the script as before. Adjust `your_command` to the actual command you want to run. This script will run for approximately three days, creating a new output file every hour and appending logs to the same file every 5 seconds within each hour.
+
+
+
 CREATE OR REPLACE FUNCTION simulate_subtransslru_workload()
 RETURNS VOID
 AS $$
