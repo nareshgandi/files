@@ -1,3 +1,29 @@
+
+I apologize for the confusion. If `schemaname` is not available directly in your PostgreSQL version, you can use `pg_namespace` to get the schema name. Here's an adjusted query:
+
+```sql
+SELECT
+  nspname AS schema_name,
+  indexrelid::regclass AS index_name,
+  indrelid::regclass AS table_name,
+  pg_size_pretty(pg_total_relation_size(indexrelid)) AS index_size
+FROM
+  pg_index
+JOIN
+  pg_class ON pg_class.oid = pg_index.indexrelid
+JOIN
+  pg_namespace ON pg_namespace.oid = pg_class.relnamespace
+WHERE
+  indisvalid = false;
+```
+
+This query includes `pg_namespace` to fetch the schema name. Adjust it according to your PostgreSQL version and requirements.
+
+
+
+
+
+
 DO $$ 
 DECLARE
     table_name text;
