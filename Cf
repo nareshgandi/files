@@ -1,6 +1,4 @@
-If the `bc` command is not available on your system, you can use simple arithmetic within the shell script without relying on external tools. Here's an updated version of the script without using `bc`:
 
-```bash
 #!/bin/bash
 
 # PostgreSQL connection details
@@ -40,6 +38,4 @@ perform_vacuum() {
 # Main script execution
 identify_bloat
 perform_vacuum
-```
 
-This version avoids the use of `bc` for arithmetic comparisons within the shell script.
