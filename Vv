@@ -1,0 +1,15 @@
+ Function to perform vacuum on bloated tables
+perform_vacuum() {
+  echo "Performing vacuum on bloated tables..."
+  BLOATED_TABLES=$(psql -U $PG_USER -d $PG_DB -h $PG_HOST -p $PG_PORT -t -c "SELECT schemaname || '.' || tablename FROM pg_tables WHERE schemaname NOT LIKE 'pg_%' AND schemaname != 'information_schema' AND (pg_total_relation_size(schemaname || '.' || tablename) - pg_relation_size(schemaname || '.' || tablename)) / NULLIF(pg_total_relation_size(schemaname || '.' || tablename), 0)::FLOAT * 100 > 10;")
+
+  for TABLE in $BLOATED_TABLES; do
+    TABLE_SIZE=$(psql -U $PG_USER -d $PG_DB -h $PG_HOST -p $PG_PORT -t -c "SELECT pg_total_relation_size('$TABLE') / NULLIF((1024 * 1024), 0);")
+    
+    if (( $(echo "$TABLE_SIZE >= $MIN_VACUUM_SIZE_MB" | bc -l) )); then
+      psql -U $PG_USER -d $PG_DB -h $PG_HOST -p $PG_PORT -c "VACUUM FULL VERBOSE ANALYZE $TABLE;"
+    else
+      psql -U $PG_USER -d $PG_DB -h $PG_HOST -p $PG_PORT -c "VACUUM VERBOSE ANALYZE $TABLE;"
+    fi
+  done
+}
