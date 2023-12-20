@@ -1,0 +1,45 @@
+Certainly! I've updated the script to include a check for table size before performing a more aggressive vacuum.
+
+```bash
+#!/bin/bash
+
+# PostgreSQL connection details
+PG_USER="your_username"
+PG_DB="your_database"
+PG_HOST="localhost"
+PG_PORT="5432"
+MIN_VACUUM_SIZE_MB=10
+
+# Function to identify bloat in tables
+identify_bloat() {
+  echo "Identifying bloat in tables..."
+  TABLES=$(psql -U $PG_USER -d $PG_DB -h $PG_HOST -p $PG_PORT -t -c "SELECT schemaname || '.' || tablename FROM pg_tables WHERE schemaname NOT LIKE 'pg_%' AND schemaname != 'information_schema';")
+
+  for TABLE in $TABLES; do
+    BLOAT_INFO=$(psql -U $PG_USER -d $PG_DB -h $PG_HOST -p $PG_PORT -t -c "SELECT current_database(), '$TABLE', pg_size_pretty(pg_total_relation_size('$TABLE')), pg_size_pretty(pg_total_relation_size('$TABLE') - pg_relation_size('$TABLE')), (pg_total_relation_size('$TABLE') - pg_relation_size('$TABLE')) / pg_total_relation_size('$TABLE')::FLOAT * 100;")
+    echo "$BLOAT_INFO"
+  done
+}
+
+# Function to perform vacuum on bloated tables
+perform_vacuum() {
+  echo "Performing vacuum on bloated tables..."
+  BLOATED_TABLES=$(psql -U $PG_USER -d $PG_DB -h $PG_HOST -p $PG_PORT -t -c "SELECT schemaname || '.' || tablename FROM pg_tables WHERE schemaname NOT LIKE 'pg_%' AND schemaname != 'information_schema' AND (pg_total_relation_size(schemaname || '.' || tablename) - pg_relation_size(schemaname || '.' || tablename)) / pg_total_relation_size(schemaname || '.' || tablename)::FLOAT * 100 > 10;")
+
+  for TABLE in $BLOATED_TABLES; do
+    TABLE_SIZE=$(psql -U $PG_USER -d $PG_DB -h $PG_HOST -p $PG_PORT -t -c "SELECT pg_total_relation_size('$TABLE') / (1024 * 1024);")
+    
+    if (( $(echo "$TABLE_SIZE >= $MIN_VACUUM_SIZE_MB" | bc -l) )); then
+      psql -U $PG_USER -d $PG_DB -h $PG_HOST -p $PG_PORT -c "VACUUM FULL VERBOSE ANALYZE $TABLE;"
+    else
+      psql -U $PG_USER -d $PG_DB -h $PG_HOST -p $PG_PORT -c "VACUUM VERBOSE ANALYZE $TABLE;"
+    fi
+  done
+}
+
+# Main script execution
+identify_bloat
+perform_vacuum
+```
+
+This script now checks the size of each table and performs a `VACUUM FULL` only if the size is equal to or greater than the specified threshold (`MIN_VACUUM_SIZE_MB`). Adjust the threshold as needed for your environment.
