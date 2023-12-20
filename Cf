@@ -29,7 +29,7 @@ perform_vacuum() {
   for TABLE in $BLOATED_TABLES; do
     TABLE_SIZE=$(psql -U $PG_USER -d $PG_DB -h $PG_HOST -p $PG_PORT -t -c "SELECT pg_total_relation_size('$TABLE') / NULLIF((1024 * 1024), 0);")
     
-    if (( $(echo "$TABLE_SIZE >= $MIN_VACUUM_SIZE_MB" | bc) )); then
+    if (( $(echo "$TABLE_SIZE >= $MIN_VACUUM_SIZE_MB") )); then
       psql -U $PG_USER -d $PG_DB -h $PG_HOST -p $PG_PORT -c "VACUUM FULL VERBOSE ANALYZE $TABLE;"
     else
       psql -U $PG_USER -d $PG_DB -h $PG_HOST -p $PG_PORT -c "VACUUM VERBOSE ANALYZE $TABLE;"
