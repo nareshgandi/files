@@ -1,0 +1,44 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Parameters:
+  DBInstanceName:
+    Type: String
+    Description: Name for the RDS instance
+
+  SecurityGroupId:
+    Type: AWS::EC2::SecurityGroup::Id
+    Description: Security Group ID for the RDS instance
+
+Resources:
+  PrimaryDBInstance:
+    Type: 'AWS::RDS::DBInstance'
+    Properties:
+      AllocatedStorage: 20  # Adjust as needed
+      DBInstanceIdentifier: !Ref DBInstanceName
+      Engine: 'postgres'
+      EngineVersion: '15.3'  # Adjust as needed
+      MasterUsername: postgres
+      MasterUserPassword: postgres
+      MultiAZ: false  # Set to true for Multi-AZ deployment
+      VPCSecurityGroups: [!Ref SecurityGroupId]
+      PubliclyAccessible: Yes
+      DBSubnetGroupName: b30-rds-sg
+      DBInstanceClass: db.t3.medium
+
+  ReadReplicaDBInstance:
+    Type: 'AWS::RDS::DBInstance'
+    Properties:
+      SourceDBInstanceIdentifier: !Ref PrimaryDBInstance
+      DBInstanceIdentifier: !Sub '${DBInstanceName}-read-replica'
+      AutoMinorVersionUpgrade: true
+      AvailabilityZone: 'us-east-1a'  # Replace with your desired AZ
+      PubliclyAccessible: Yes
+
+Outputs:
+  PrimaryDBEndpoint:
+    Description: 'Endpoint of the primary RDS instance'
+    Value: !GetAtt PrimaryDBInstance.Endpoint.Address
+
+  ReadReplicaDBEndpoint:
+    Description: 'Endpoint of the read replica RDS instance'
+    Value: !GetAtt ReadReplicaDBInstance.Endpoint.Address
