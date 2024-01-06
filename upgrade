@@ -1,0 +1,106 @@
+
+mkdir -p /u03/pgsql/customts
+
+
+1. Stop both primary and standby
+
+2. Initialize version 16 on primary (Do not initialize in standby, just create empty folder)
+
+mkdir -p /u01/pgsql/16							#primary
+/usr/pgsql-16/bin/initdb -D /u01/pgsql/16		#primary
+mkdir -p /u01/pgsql/16							#standby
+
+3. Ensure no instance is running in both machines
+
+4. Upgrade with below command
+/usr/pgsql-16/bin/pg_upgrade -d /u01/pgsql/15 -D /u01/pgsql/16 -b /usr/pgsql-15/bin -B  /usr/pgsql-16/bin -k
+
+5. Run the below command to make rsync
+[postgres@lab02 pgsql]$ pwd
+/u01/pgsql
+[postgres@lab02 pgsql]$
+
+rsync --archive --delete --hard-links --size-only --no-inc-recursive --verbose \
+/u01/pgsql/15 \
+/u01/pgsql/16 \
+postgres@192.168.110.195:/u01/pgsql --dry-run
+
++++++
+
+Create tablespace
+
+mkdir -p /u01/custom  #both primary and standby
+
+#run below in primary
+create tablespace ts location '/u01/custom';
+create database ac tablespace ts;
+/usr/pgsql-15/bin/pgbench -i -s 30 ac
+
+stop both machines, no need to create any extra folders inside /u01/custom, 
+PG_16* will automatically gets created
+
+/usr/pgsql-16/bin/pg_upgrade -d /u01/pgsql/15 -D /u01/pgsql/16 -b /usr/pgsql-15/bin -B  /usr/pgsql-16/bin -k
+
+#main directory upgrade
+mkdir -p /u01/pgsql/16  #standby
+
+rsync --archive --delete --hard-links --size-only --no-inc-recursive --verbose \
+/u01/pgsql/15 \
+/u01/pgsql/16 \
+postgres@192.168.110.195:/u01/pgsql --dry-run
+
+rsync --archive --delete --hard-links --size-only --no-inc-recursive --verbose \
+/u01/custom/PG_15_202209061 \
+/u01/custom/PG_16_202307071 \
+postgres@192.168.110.195:/u01/custom  --dry-run
+
+++++
+
+1. pg_upgrade
+
+	1. direct copy (no prior backup required)
+	
+		- Time consuming
+		- Equal amount of disk space
+	
+	2. link method (v15 folder gone)
+		
+		- No time consuming
+		- If something goes wrong, you might need to restore v15 database.
+	
+	3. When you have custom tablespaces.
+	
+		- If its copy, careful while removing old tablespace.
+	
+	4. when you have standby
+	
+		- What if your primary has custom tablespace?
+		- upgrade
+	
+	5. when you have extensions
+	
+	6. what if you have logical replication in place.
+	
+2. pg_dump
+
+3. logical replication (near zero)
+
+	1. change wal_level=logical (n1)
+	
+	2. initialize and start cluster in standby(n2)
+	
+	3. take metadata backup
+	/usr/pgsql-15/bin/pg_dump -U postgres -d demo -s > metaonly.sql
+	
+	4. import metadata in (n2) after creating required database
+	psql -f metaonly.sql
+	
+	5. set up publication (n1)
+	demo=# create publication my_publication for all tables;
+	CREATE PUBLICATION
+	demo=#
+	
+	6. set up subsription (n2)
+	CREATE SUBSCRIPTION my_subscription 
+    CONNECTION 'host=192.168.110.198 port=5432 dbname=postgres' PUBLICATION my_publication;
+
