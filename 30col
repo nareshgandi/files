@@ -1,0 +1,73 @@
+-- Create table with 30 columns
+CREATE TABLE random_table (
+    column1 INT,
+    column2 VARCHAR(50),
+    column3 DATE,
+    column4 DECIMAL(10, 2),
+    column5 BOOLEAN,
+    column6 TEXT,
+    column7 TIMESTAMP,
+    column8 CHAR(1),
+    column9 INTEGER,
+    column10 VARCHAR(100),
+    column11 FLOAT,
+    column12 BOOLEAN,
+    column13 TEXT,
+    column14 DATE,
+    column15 DECIMAL(8, 3),
+    column16 INTEGER,
+    column17 VARCHAR(50),
+    column18 TIMESTAMP,
+    column19 CHAR(1),
+    column20 TEXT,
+    column21 BOOLEAN,
+    column22 INTEGER,
+    column23 VARCHAR(100),
+    column24 FLOAT,
+    column25 DATE,
+    column26 DECIMAL(10, 2),
+    column27 TEXT,
+    column28 BOOLEAN,
+    column29 CHAR(1),
+    column30 TIMESTAMP
+);
+
+-- Insert random data into the table
+INSERT INTO random_table
+VALUES
+    (random() * 1000, 'John Doe', CURRENT_DATE - (random() * 365 * 10 || ' days')::interval, random() * 1000, TRUE, 'Lorem ipsum', NOW() - (random() * 365 * 5 || ' days')::interval, 'A', random() * 1000, 'Data 1', random(), TRUE, 'Random Text', CURRENT_DATE - (random() * 365 * 10 || ' days')::interval, random() * 1000, 'Value', NOW() - (random() * 365 * 5 || ' days')::interval, 'B', 'More Data', TRUE, random() * 1000, 'Information', random(), CURRENT_DATE - (random() * 365 * 10 || ' days')::interval, random() * 1000, 'Some Text', TRUE, 'C', NOW() - (random() * 365 * 5 || ' days')::interval);
+
+
+-- Insert 100k random rows into the table
+INSERT INTO random_table
+SELECT
+    random() * 1000,
+    'Name ' || (i + 1),
+    CURRENT_DATE - (random() * 365 * 10 || ' days')::interval,
+    random() * 1000,
+    (i % 2 = 0),
+    'Lorem ipsum ' || (i + 1),
+    NOW() - (random() * 365 * 5 || ' days')::interval,
+    CASE WHEN i % 3 = 0 THEN 'A' WHEN i % 3 = 1 THEN 'B' ELSE 'C' END,
+    random() * 1000,
+    'Data ' || (i + 1),
+    random(),
+    (i % 2 = 1),
+    'Random Text ' || (i + 1),
+    CURRENT_DATE - (random() * 365 * 10 || ' days')::interval,
+    random() * 1000,
+    'Value ' || (i + 1),
+    NOW() - (random() * 365 * 5 || ' days')::interval,
+    CASE WHEN i % 3 = 0 THEN 'A' WHEN i % 3 = 1 THEN 'B' ELSE 'C' END,
+    'More Data ' || (i + 1),
+    (i % 2 = 0),
+    random() * 1000,
+    'Information ' || (i + 1),
+    random(),
+    CURRENT_DATE - (random() * 365 * 10 || ' days')::interval,
+    random() * 1000,
+    'Some Text ' || (i + 1),
+    (i % 2 = 1),
+    CASE WHEN i % 3 = 0 THEN 'A' WHEN i % 3 = 1 THEN 'B' ELSE 'C' END,
+    NOW() - (random() * 365 * 5 || ' days')::interval
+FROM generate_series(1, 100000) i;
