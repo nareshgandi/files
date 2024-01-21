@@ -1,0 +1,28 @@
+pip install pillow
+
+vi generate_tiff.py
+from PIL import Image
+
+def create_sample_tiff(filename, width, height):
+    # Create a blank image
+    img = Image.new('1', (width, height), color=1)  # '1' for 1-bit pixels (black and white)
+
+    # Save the image
+    img.save(filename)
+
+if __name__ == "__main__":
+    # Set the filename and dimensions of the image
+    tiff_filename = "sample.tif"
+    image_width = 100
+    image_height = 100
+
+    # Create the sample TIFF image
+    create_sample_tiff(tiff_filename, image_width, image_height)
+
+    print(f"Sample TIFF image '{tiff_filename}' created successfully.")
+
+python generate_tiff.py
+
+raster2pgsql -s 4326 -I -C -M sample.tif -F -t 100x100 public.sample_table | psql -h localhost -d your_database -U your_user -W
+raster2pgsql -s 4326 -I -C -M sample.tif -F -t 100x100 public.sample_table | psql -h localhost -d your_database -U your_user -W
+gdalinfo -format GTiff /path/to/your/sample.tif
