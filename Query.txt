@@ -1,3 +1,39 @@
+Query 1
+
+SELECT
+s.annee||' - '||a.libelle AS millesime_region,
+sum(s.nombre) AS contenants,
+sum(s.nombre*c.contenance) AS litres
+FROM
+contenant c
+JOIN stock s
+ON s.contenant_id = c.id
+JOIN vin v
+ON s.vin_id = v.id
+LEFT join appellation a
+ON v.appellation_id = a.id
+WHERE s.annee = (SELECT round(random()*50)+1950 AS annee)
+GROUP BY s.annee||' - '||a.libelle;
+
+Query 2
+
+SELECT
+s.annee||' - '||a.libelle AS millesime_region,
+sum(s.nombre) AS contenants,
+sum(s.nombre*c.contenance) AS litres
+FROM
+contenant c
+JOIN stock s
+ON s.contenant_id = c.id
+JOIN vin v
+ON s.vin_id = v.id
+JOIN appellation a
+ON v.appellation_id = a.id
+WHERE s.annee = (SELECT round(random()*50)+1950 AS annee)
+GROUP BY s.annee||' - '||a.libelle;
+
+what is the difference between above two queries and which runs fast?
+
 \pset pager off
 
 EXPLAIN (ANALYZE, COSTS OFF)
