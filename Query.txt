@@ -1,3 +1,84 @@
+wget https://dali.bo/tp_cave
+psql
+create user caviste with password 'caviste';
+pg_restore -d demo tp_cave
+
+wget https://dali.bo/tp_magasin   --no-check-certificate
+pg_restore -d postgres  tp_magasin
+
+explain analyze
+SELECT
+m.annee||' - '||a.libelle as millesime_region,
+sum(s.nombre) as contenants,
+sum(s.nombre*c.contenance) as litres
+FROM
+contenant c
+JOIN stock s
+ON s.contenant_id = c.id
+JOIN (SELECT round(random()*0)+1950 AS annee) m
+ON s.annee = m.annee
+JOIN vin v
+ON s.vin_id = v.id
+LEFT JOIN appellation a
+ON v.appellation_id = a.id
+GROUP BY m.annee||' - '||a.libelle;
+
+explain analyze
+SELECT
+s.annee||' - '||a.libelle AS millesime_region,
+sum(s.nombre) AS contenants,
+sum(s.nombre*c.contenance) AS litres
+FROM
+contenant c
+JOIN stock s
+ON s.contenant_id = c.id
+JOIN vin v
+ON s.vin_id = v.id
+LEFT join appellation a
+ON v.appellation_id = a.id
+WHERE s.annee = 1950
+GROUP BY s.annee||' - '||a.libelle;
+
+
+explain analyze
+SELECT
+s.annee||' - '||a.libelle AS millesime_region,
+sum(s.nombre) AS contenants,
+sum(s.nombre*c.contenance) AS litres
+FROM
+contenant c
+JOIN stock s
+ON s.contenant_id = c.id
+JOIN vin v
+ON s.vin_id = v.id
+join appellation a
+ON v.appellation_id = a.id
+WHERE s.annee = 1950
+GROUP BY s.annee||' - '||a.libelle;
+
++++
+
+SET search_path TO magasin,facturation ;
+SET max_parallel_workers_per_gather TO 0; 
+SET jit TO off ;
+
+SELECT SUM (reglements.montant) AS somme_reglements
+FROM factures
+INNER JOIN reglements USING (numero_facture)
+INNER JOIN commandes USING (numero_commande)
+INNER JOIN clients cl USING (client_id)
+INNER JOIN types_clients USING (type_client)
+INNER JOIN lignes_commandes lc USING (numero_commande)
+INNER JOIN lots l ON (l.numero_lot = lc.numero_lot_expedition)
+INNER JOIN transporteurs USING (transporteur_id)
+INNER JOIN contacts ct ON (ct.contact_id = cl.contact_id)
+WHERE transporteurs.nom = 'Royal Air Drone'
+AND login = 'Beatty_Brahem' ;
+SHOW join_collapse_limit ;
+
+++++
+
+
 Query 1
 
 SELECT
