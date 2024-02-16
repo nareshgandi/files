@@ -1,6 +1,36 @@
 hrtest=>  call aws_oracle_ext.dbms_output$put_line('Hello world');
 CALL
 
+hrtest=> \sf get_employee_data
+CREATE OR REPLACE PROCEDURE hr.get_employee_data()
+ LANGUAGE plpgsql
+AS $procedure$
+/* Declare variables to hold employee data */
+DECLARE
+    v_employee_id hr.employees.employee_id%TYPE;
+    v_first_name hr.employees.first_name%TYPE;
+    v_last_name hr.employees.last_name%TYPE;
+    v_email hr.employees.email%TYPE;
+    emp_rec RECORD;
+BEGIN
+    /* Open the cursor */
+    FOR emp_rec IN
+    SELECT
+        *
+        FROM hr.employees
+        WHERE employee_id = 100
+    LOOP
+        /* Fetch data from the cursor */
+        v_employee_id := emp_rec.employee_id;
+        v_first_name := emp_rec.first_name;
+        v_last_name := emp_rec.last_name;
+        v_email := emp_rec.email;
+        /* Process or display the fetched data (you can modify this part based on your requirements) */
+        CALL aws_oracle_ext.dbms_output$put_line(a => CONCAT_WS('', 'Employee ID: ', v_employee_id, ', Name: ', v_first_name, ' ', v_last_name, ', Email: ', v_email));
+    END LOOP;
+/* Close the cursor (implicitly done when the loop finishes) */
+END;
+$procedure$
 
 wget https://dali.bo/tp_cave
 psql
