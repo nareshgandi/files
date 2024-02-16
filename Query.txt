@@ -1,3 +1,7 @@
+hrtest=>  call aws_oracle_ext.dbms_output$put_line('Hello world');
+CALL
+
+
 wget https://dali.bo/tp_cave
 psql
 create user caviste with password 'caviste';
