@@ -1,0 +1,77 @@
+
+1. yum install pgbackrest [both machines]
+
+2. set up passwordless connectivity for postgres user between both machines [both machines]
+
+3. postgresql.conf [prod server]
+
+archive_command = 'pgbackrest --stanza=lab01 archive-push %p'
+archive_mode = on
+listen_addresses = '*'
+log_line_prefix = ''
+
+4. Run in both machines
+
+mkdir -p -m 770 /var/log/pgbackrest
+chown postgres:postgres /var/log/pgbackrest
+
+mkdir -p /etc/pgbackrest
+mkdir -p /etc/pgbackrest/conf.d
+
+touch /etc/pgbackrest/pgbackrest.conf
+chmod 640 /etc/pgbackrest/pgbackrest.conf
+chown postgres:postgres /etc/pgbackrest/pgbackrest.conf
+
+mkdir -p /u01/backups/pgbackrest
+chown -R postgres:postgres /u01/backups/pgbackrest
+
+5. Run in production server (/etc/pgbackrest/pgbackrest.conf)
+
+[global]
+repo1-host=lab02
+repo1-host-user=postgres
+repo1-retention-full=2
+repo1-retention-full-type=count
+process-max=2
+log-level-console=info
+log-level-file=debug
+
+[lab01]
+pg1-path=/u01/pgsql/15
+
+6. Run in the backup server (/etc/pgbackrest/pgbackrest.conf)
+
+[global]
+repo1-path=/u01/backups/pgbackrest
+repo1-retention-full=2
+repo1-retention-full-type=count
+process-max=2
+log-level-console=info
+log-level-file=debug
+start-fast=y
+
+
+[lab01]
+pg1-path=/u01/pgsql/15
+pg1-host=lab01
+pg1-port = 5432
+
+
+##on a backup server
+sudo -u postgres pgbackrest --stanza=lab01 stanza-create
+sudo -u postgres pgbackrest --stanza=lab01  check
+sudo -u postgres pgbackrest --stanza=lab01  backup
+
+sudo -u postgres pgbackrest --stanza=lab01 --type=incr backup
+sudo -u postgres pgbackrest --stanza=lab01 --type=full backup
+
+sudo -u postgres pgbackrest info
+
+7. Restore in production server
+
+sudo -u postgres pgbackrest --stanza=lab01 restore
+
+8. To stop stanza
+
+sudo -u postgres pgbackrest --stanza=lab01 --log-level-console=info stop
+sudo -u postgres pgbackrest --stanza=lab01 --log-level-console=info stanza-delete
