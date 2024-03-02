@@ -1,0 +1,32 @@
+pipeline {
+    agent any
+	
+	environment {
+		AWS_ACCESS_KEY_ID = credentials('aws-access-key-id')
+		AWS_SECRET_ACCESS_KEY = credentials('aws-secret-access-key')
+		AWS_DEFAULT_REGION    = 'us-east-1'
+	}
+
+    stages {
+        stage('Execute AWS CLI command') {
+            steps {
+                sh """
+					/usr/local/bin/aws rds create-db-instance \
+					--engine postgres \
+					--db-instance-identifier mypostgrescli3 \
+					--allocated-storage 25 \
+					--db-instance-class db.t3.micro \
+					--vpc-security-group-ids sg-0dfd7313653147bd2 \
+					--db-subnet-group b30-dbsg \
+					--master-username postgres \
+					--master-user-password postgres \
+					--backup-retention-period 3 \
+					--publicly-accessible
+					"""
+            }
+        }
+    }
+}
+
+
+
