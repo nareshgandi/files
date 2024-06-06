@@ -1,0 +1,97 @@
+DO $$
+DECLARE
+    priv_record RECORD;
+BEGIN
+    FOR priv_record IN
+        SELECT grantee, privilege_type
+        FROM information_schema.role_table_grants
+        WHERE table_name = 'dept1'
+    LOOP
+        EXECUTE format(
+            'GRANT %s ON TABLE dept TO %I',
+            priv_record.privilege_type,
+            priv_record.grantee
+        );
+    END LOOP;
+END $$;
+
+
+REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA public FROM username;
+REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public FROM username;
+REVOKE ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA public FROM username;
+DROP USER username;
+
+SELECT 
+  n.nspname as "Schema",
+  CASE c.relkind 
+    WHEN 'r' THEN 'table' 
+    WHEN 'v' THEN 'view' 
+    WHEN 'm' THEN 'materialized view' 
+    WHEN 'S' THEN 'sequence' 
+    WHEN 'f' THEN 'foreign table' 
+  END as "Type"
+FROM pg_catalog.pg_class c
+LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+WHERE pg_catalog.array_to_string(c.relacl, E'\n') LIKE 'hdfc_read';
+
+REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA myschem FROM user_mike;
+REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA myschem FROM user_mike;
+REVOKE ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA myschem FROM user_mike;
+REVOKE ALL PRIVILEGES ON SCHEMA myschem FROM user_mike;
+ALTER DEFAULT PRIVILEGES IN SCHEMA myschem REVOKE ALL ON SEQUENCES FROM user_mike;
+ALTER DEFAULT PRIVILEGES IN SCHEMA myschem REVOKE ALL ON TABLES FROM user_mike;
+ALTER DEFAULT PRIVILEGES IN SCHEMA myschem REVOKE ALL ON FUNCTIONS FROM user_mike;
+REVOKE USAGE ON SCHEMA myschem FROM user_mike;
+REASSIGN OWNED BY user_mike TO masteruser;
+DROP USER user_mike ;
+
+REVOKE all on database myDatabase from user_mike;
+
+
+REVOKE ALL ON SCHEMA public FROM hdfc_read;
+REVOKE ALL ON DATABASE postgres FROM hdfc_read;
+DROP USER myuser;
+
+
+postgres=# drop role hdfc_read2;
+ERROR:  role "hdfc_read2" cannot be dropped because some objects depend on it
+DETAIL:  1 object in database hdfc_db
+postgres=# \q
+[postgres@pghelp03 ~]$ psql -U postgres -d hdfc_db
+psql (16.3)
+Type "help" for help.
+
+hdfc_db=# drop user hdfc_read2;
+ERROR:  role "hdfc_read2" cannot be dropped because some objects depend on it
+DETAIL:  privileges for table dept
+hdfc_db=#
+
+a=#
+a=# drop user hdfc_read;
+ERROR:  role "hdfc_read" cannot be dropped because some objects depend on it
+DETAIL:  privileges for function group_concat(text)
+privileges for view sales_by_film_category
+1 object in database postgres
+2 objects in database hdfc_db
+
+
+[postgres@pghelp03 ~]$ psql
+psql (16.3, server 15.7)
+Type "help" for help.
+
+postgres=# drop user testuser;
+ERROR:  role "testuser" cannot be dropped because some objects depend on it
+DETAIL:  3 objects in database a
+2 objects in database b
+postgres=#
+postgres=# \c a
+psql (16.3, server 15.7)
+You are now connected to database "a" as user "postgres".
+a=#
+a=#  drop user testuser;
+ERROR:  role "testuser" cannot be dropped because some objects depend on it
+DETAIL:  privileges for function _group_concat(text,text)
+privileges for table customer
+privileges for view film_list
+2 objects in database b
+a=#
