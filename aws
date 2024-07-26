@@ -1,0 +1,87 @@
+-- Create a sample table
+CREATE TABLE sample_table (
+    id NUMBER,
+    column_with_null VARCHAR2(50)
+);
+
+-- Insert some sample data
+INSERT INTO sample_table VALUES (1, 'Value 1');
+INSERT INTO sample_table VALUES (2, NULL);
+INSERT INTO sample_table VALUES (3, 'Value 3');
+
+-- Create the update procedure
+CREATE OR REPLACE PROCEDURE update_column_value(
+    p_id NUMBER,
+    p_new_value VARCHAR2
+) AS
+BEGIN
+    UPDATE sample_table
+    SET column_with_null = p_new_value
+    WHERE id = p_id;
+    
+    COMMIT; -- Commit the transaction
+END update_column_value;
+/
+
+BEGIN
+    update_column_value(2, 'New_Value');
+END;
+/
+
+SELECT NVL(column_with_null, 'Default_Value') from sample_table;
+
++++
+
+CREATE TABLE sample_table (
+    id int,
+    column_with_null VARCHAR(50)
+);
+
+-- Insert some sample data
+INSERT INTO sample_table VALUES (1, 'Value 1');
+INSERT INTO sample_table VALUES (2, NULL);
+INSERT INTO sample_table VALUES (3, 'Value 3');
+
+SELECT COALESCE(column_with_null, 'Default_Value') from sample_table;
+
++++
+
+-- Create a procedure that uses NVL
+CREATE OR REPLACE PROCEDURE sample_procedure AS
+    v_value VARCHAR2(50);
+BEGIN
+    -- Use NVL in a SELECT statement
+    SELECT NVL(column_with_null, 'Default_Value') INTO v_value
+    FROM sample_table
+    WHERE id = 2;
+
+    -- Display the result
+    DBMS_OUTPUT.PUT_LINE('Result: ' || v_value);
+END sample_procedure;
+/
+
+BEGIN
+    sample_procedure;
+END;
+/
+
++++
+
+-- Create a function that uses COALESCE
+CREATE OR REPLACE FUNCTION sample_function()
+RETURNS VOID AS $$
+DECLARE
+    v_value VARCHAR;
+BEGIN
+    -- Use COALESCE in a SELECT statement
+    SELECT COALESCE(column_with_null, 'Default_Value') INTO v_value
+    FROM sample_table
+    WHERE id = 2;
+
+    -- Display the result
+    RAISE NOTICE 'Result: %', v_value;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Execute the function
+SELECT sample_function();
