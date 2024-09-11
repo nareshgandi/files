@@ -24,3 +24,46 @@ a=# select * from emp;
 
 a=# insert into emp values(1,100);
 INSERT 0 1
+
+### update
+
+##check if it is a foreign table?
+a=# \dE
+            List of relations
+ Schema | Name |     Type      |  Owner   
+--------+------+---------------+----------
+ public | emp  | foreign table | postgres
+(1 row)
+
+##sal is 200 for emp id 2
+a=# select * from emp;
+ id | sal 
+----+-----
+  1 | 100
+  2 | 200
+(2 rows)
+
+## update it to 300
+a=# update emp set sal=300 where id=2;
+UPDATE 1
+a=# 
+
+## in the source database
+
+a=# insert into emp values(2,200);
+INSERT 0 1
+a=# 
+<----updated the sal to 300 in foreign server ----->
+a=# select * from emp;
+ id | sal 
+----+-----
+  1 | 100
+  2 | 300
+(2 rows)
+
+a=# 
+
+
+
+
+
