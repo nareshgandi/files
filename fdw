@@ -64,6 +64,79 @@ a=# select * from emp;
 a=# 
 
 
+Next use case
 
+a=# select * from a.emp;
+ id | sal  
+----+------
+  1 | 1000
+(1 row)
+
+a=# \dt+ a.emp
+                                     List of relations
+ Schema | Name | Type  |  Owner   | Persistence | Access method |    Size    | Description 
+--------+------+-------+----------+-------------+---------------+------------+-------------
+ a      | emp  | table | postgres | permanent   | heap          | 8192 bytes | 
+(1 row)
+
+a=# \dt+ emp
+Did not find any relation named "emp".
+a=# 
+a=# \dE
+            List of relations
+ Schema | Name |     Type      |  Owner   
+--------+------+---------------+----------
+ public | emp  | foreign table | postgres
+(1 row)
+
+a=# 
+a=# select * from emp;
+ id | sal 
+----+-----
+  1 | 100
+  2 | 300
+(2 rows)
+
+a=# select * from a.emp;
+ id | sal  
+----+------
+  1 | 1000
+(1 row)
+
+a=# update emp set sal=(select sal from a.emp where id=1) where id=1;
+UPDATE 1
+a=# 
+a=# select * from emp;
+ id | sal  
+----+------
+  2 |  300
+  1 | 1000
+(2 rows)
+
+a=# select * from a.emp;
+ id | sal  
+----+------
+  1 | 1000
+(1 row)
+
+a=# 
+
++++ in main server
+
+a=# select * from emp;
+ id | sal 
+----+-----
+  1 | 100
+  2 | 300
+(2 rows)
+
+a=# select * from emp;
+ id | sal  
+----+------
+  2 |  300
+  1 | 1000
+(2 rows)
+
+a=# 
 
 
