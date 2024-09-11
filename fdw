@@ -1,0 +1,26 @@
+a=# create extension postgres_fdw;
+CREATE EXTENSION
+a=# CREATE SERVER foreigndb_fdw FOREIGN DATA WRAPPER postgres_fdw OPTIONS (host '10.1.0.1', port '5432', dbname 'a');
+CREATE SERVER
+a=# CREATE USER MAPPING FOR  postgres server foreigndb_fdw OPTIONS (user 'postgres', password 'postgres');
+CREATE USER MAPPING
+a=# GRANT USAGE ON FOREIGN SERVER foreigndb_fdw TO  postgres;
+GRANT
+a=# IMPORT FOREIGN SCHEMA public LIMIT TO (emp) FROM SERVER foreigndb_fdw INTO public;
+IMPORT FOREIGN SCHEMA
+
+a=#        \dE
+            List of relations
+ Schema | Name |     Type      |  Owner   
+--------+------+---------------+----------
+ public | emp  | foreign table | postgres
+(1 row)
+
+a=# 
+a=# select * from emp;
+ id | sal 
+----+-----
+(0 rows)
+
+a=# insert into emp values(1,100);
+INSERT 0 1
