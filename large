@@ -1,0 +1,19 @@
+SELECT lo_get(data_oid, 0, 1024) 
+FROM large_object_table 
+WHERE id = 1;
+
+
+CREATE TABLE large_data_table (
+    id SERIAL PRIMARY KEY,
+    data BYTEA
+);
+
+INSERT INTO large_object_table (data_oid)
+VALUES (lo_import('/path/to/your/large/file'));
+
+select
+lo.loid,
+pg_size_pretty(sum(octet_length(lo.data)))
+from pg_largeobject lo
+where lo.loid in (select pg_largeobject.loid from pg_largeobject)
+group by lo.loid;
