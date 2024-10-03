@@ -27,3 +27,14 @@
 | Server Certificate (server.crt) | The server's public key certificate, which includes the server's public key. It is signed by the CA and allows clients to verify the server's identity.                                       |   
 | Client Private Key (client.key) | The private key for the client, used to decrypt messages encrypted with the client’s public key and to establish secure sessions.                                                             |   
 | Client Certificate (client.crt) | The client’s public key certificate, which includes the client’s public key. It is signed by the CA and allows the server to verify the client’s identity (if mutual authentication is used). |   
+
+### SSL modes
+
+| sslmode     | SSL Required | Certificate Validation | Hostname Validation |
+|-------------|--------------|------------------------|---------------------|
+| disable     | No           | No                     | No                  |
+| allow       | No           | No                     | No                  |
+| prefer      | No           | No                     | No                  |
+| require     | Yes          | No                     | No                  |
+| verify-ca   | Yes          | Yes                    | No                  |
+| verify-full | Yes          | Yes                    | Yes                 |
