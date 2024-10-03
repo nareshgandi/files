@@ -1,0 +1,36 @@
+# create certificate
+mkdir -p certs
+openssl req -new -text -nodes -keyout server.key -out server.csr -subj "/CN=192.168.1.128"
+
+## create server key
+openssl req -x509 -text -in server.csr -key server.key -out server.crt
+cp server.crt root.crt
+rm server.csr
+chmod og-rwx server.key
+
+## create client key
+openssl req -new -nodes -keyout postgresql.key -out postgresql.csr -subj "/CN=192.168.1.129"
+openssl x509 -req -CAcreateserial -in postgresql.csr -CA root.crt -CAkey server.key -out postgresql.crt
+
+rm postgresql.csr
+chmod og-rwx postgresql.key
+
+## copy client key to client machine
+cp server.key server.crt root.crt /u01/pgsql/data
+scp postgresql.key root.srl postgresql.crt 192.168.1.129:/home/postgres/.postgresql
+
+
+in postgresql.conf file
+---------------------------
+
+ssl = on
+ssl_cert_file = 'server.crt'
+ssl_key_file = 'server.key'
+ssl_ca_file = 'root.crt'
+
+in pg_hba.conf file
+--------------------------
+hostssl  all    all    0.0.0.0/0      md5 clientcert=1
+
+
+psql -h 192.168.1.128
