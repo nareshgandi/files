@@ -35,7 +35,7 @@ Ensure that all actions on employee records comply with data governance policies
 
 ### Scripts
 
-
+```
 -- Create the database
 CREATE DATABASE pghyd_db;
 
@@ -128,7 +128,11 @@ VALUES
     ('Olivia', 'Finance', 82000, 'PGHYD', TRUE, pgp_sym_encrypt('6786786789', 'mysecretpass')),
     ('Peggy', 'Engineering', 80000, 'PWI', FALSE, pgp_sym_encrypt('7897897890', 'mysecretpass')),
     ('Trent', 'Marketing', 71000, 'PGHYD', TRUE, pgp_sym_encrypt('8908908901', 'mysecretpass'));
+```
 
+### Testing
+
+```
 Step 7: Testing Access
 Now you can test access for different roles to ensure that the policies work as intended.
 For pghyd_viewer User:
@@ -172,3 +176,4 @@ alter system set pgaudit.log='all';
 SELECT name, setting 
 FROM pg_settings
 WHERE name LIKE 'pgaudit%';
+```
