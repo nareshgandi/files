@@ -15,3 +15,15 @@
 | 2. Create a Certificate Signing Request (CSR) | openssl req -new -key client.key -out client.csr -subj ""/CN=postgres""                                 | Generates a CSR that includes the client’s public key and identifying information (such as the client username).            |
 | 3. Sign the CSR with CA Certificate           | openssl x509 -req -in client.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out client.crt -days 365     | Signs the client's CSR with the CA's private key, creating a client certificate (client.crt) that is trusted by the server. |
 | 4. Configure Client to Use the Certificate    | Transfer client.crt, client.key, and ca.crt to the client machine and configure the client to use them. | Enables the client to authenticate securely to the server using the signed client certificate during the SSL handshake.     |
+
+
+### components of SSL 
+
+| Component                       | Description                                                                                                                                                                                   |   
+|---------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| CA Private Key (ca.key)         | The private key of the Certificate Authority, used to sign certificates (server and client) to establish their authenticity.                                                                  |   
+| CA Certificate (ca.crt)         | The public certificate of the CA, which contains the CA's public key. It is used to verify the signatures of the server and client certificates.                                              |   
+| Server Private Key (server.key) | The private key for the server, used to decrypt messages encrypted with the server's public key and to establish secure sessions.                                                             |   
+| Server Certificate (server.crt) | The server's public key certificate, which includes the server's public key. It is signed by the CA and allows clients to verify the server's identity.                                       |   
+| Client Private Key (client.key) | The private key for the client, used to decrypt messages encrypted with the client’s public key and to establish secure sessions.                                                             |   
+| Client Certificate (client.crt) | The client’s public key certificate, which includes the client’s public key. It is signed by the CA and allows the server to verify the client’s identity (if mutual authentication is used). |   
