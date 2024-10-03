@@ -1,0 +1,79 @@
+
+
+
+openssl req -new -x509 -days 365 -nodes -text -out server.crt \
+  -keyout server.key -subj "/CN=server"
+
+  openssl req -new -nodes -text -out root.csr \
+  -keyout root.key -subj "/CN=server"
+chmod og-rwx root.key
+
+openssl x509 -req -in root.csr -text -days 3650 \
+  -extfile /etc/ssl/openssl.cnf -extensions v3_ca \
+  -signkey root.key -out root.crt
+
+
+  openssl req -new -nodes -text -out server.csr \
+  -keyout server.key -subj "/CN=client"
+chmod og-rwx server.key
+
+openssl x509 -req -in server.csr -text -days 365 \
+  -CA root.crt -CAkey root.key -CAcreateserial \
+  -out server.crt
+
+  openssl req -new -key client.key -out client.csr -subj "/CN=10.128.0.69"
+
+
+  psql "sslmode=verify-full sslrootcert=root.crt sslcert=client.crt sslkey=client.key host=10.128.0.17 dbname=postgres user=postgres"
+
+  To create client certificates for PostgreSQL based on your instructions for generating a server certificate, follow these steps. I'll break it down into creating a client certificate that can be used to authenticate with the PostgreSQL server.
+
+Step 1: Create a Client Certificate Signing Request (CSR)
+Generate a Private Key for the Client:
+
+bash
+Copy code
+openssl genrsa -out client.key 2048
+chmod og-rwx client.key
+Create a CSR using the Client's Private Key:
+
+bash
+Copy code
+openssl req -new -key client.key -out client.csr -subj "/CN=client.yourdomain.com"
+Step 2: Sign the Client Certificate with the Root CA
+Sign the CSR with the Root CA to Generate the Client Certificate:
+bash
+Copy code
+openssl x509 -req -in client.csr -CA root.crt -CAkey root.key -CAcreateserial -out client.crt -days 365
+Step 3: Store Certificates Appropriately
+Store the Certificates:
+On the Server:
+Store server.crt and server.key in the PostgreSQL server directory (e.g., /etc/postgresql/15/main/ or wherever your PostgreSQL installation is configured to use for SSL certificates).
+On the Client:
+Store root.crt (the root certificate) in a location where your client can access it (e.g., /etc/ssl/certs/).
+Store client.crt and client.key in a secure directory on the client.
+Step 4: Configuration for PostgreSQL
+Update PostgreSQL Configuration:
+
+In your postgresql.conf, ensure the following parameters are set:
+plaintext
+Copy code
+ssl = on
+ssl_cert_file = 'server.crt'
+ssl_key_file = 'server.key'
+ssl_ca_file = 'root.crt'  # Optional, for client verification
+Reload PostgreSQL Configuration:
+
+bash
+Copy code
+sudo systemctl reload postgresql
+Additional Notes
+Key Permissions: Make sure that the server.key and client.key files are only readable by the PostgreSQL user and the client user, respectively, to maintain security.
+Client Connection: When connecting to PostgreSQL using a client (e.g., psql), specify the client certificate and key:
+bash
+Copy code
+psql "sslmode=verify-full sslrootcert=root.crt sslcert=client.crt sslkey=client.key host=dbhost.yourdomain.com dbname=yourdb user=youruser"
+By following these steps, you will have a complete set of client and server certificates configured for PostgreSQL SSL connections.
+
+
+https://www.virtuozzo.com/application-platform-docs/ssl-for-pgsql/
