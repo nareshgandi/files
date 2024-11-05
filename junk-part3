@@ -1,0 +1,167 @@
+[root@lab01 ~]# helm install my-postgresql-cluster -f values-postgres.yaml bitnami/postgresql
+NAME: my-postgresql-cluster
+LAST DEPLOYED: Tue Nov  5 23:55:02 2024
+NAMESPACE: default
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+CHART NAME: postgresql
+CHART VERSION: 16.1.1
+APP VERSION: 17.0.0
+
+** Please be patient while the chart is being deployed **
+
+PostgreSQL can be accessed via port 5432 on the following DNS names from within your cluster:
+
+    my-postgresql-cluster.default.svc.cluster.local - Read/Write connection
+
+To get the password for "postgres" run:
+
+    export POSTGRES_PASSWORD=$(kubectl get secret --namespace default my-postgresql-cluster -o jsonpath="{.data.postgres-password}" | base64 -d)
+
+To connect to your database run the following command:
+
+    kubectl run my-postgresql-cluster-client --rm --tty -i --restart='Never' --namespace default --image docker.io/bitnami/postgresql:17.0.0-debian-12-r9 --env="PGPASSWORD=$POSTGRES_PASSWORD" \
+      --command -- psql --host my-postgresql-cluster -U postgres -d postgres -p 5432
+
+    > NOTE: If you access the container using bash, make sure that you execute "/opt/bitnami/scripts/postgresql/entrypoint.sh /bin/bash" in order to avoid the error "psql: local user with ID 1001} does not exist"
+
+To connect to your database from outside the cluster execute the following commands:
+
+  NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+        Watch the status with: 'kubectl get svc --namespace default -w my-postgresql-cluster'
+
+    export SERVICE_IP=$(kubectl get svc --namespace default my-postgresql-cluster --template "{{ range (index .status.loadBalancer.ingress 0) }}{{ . }}{{ end }}")
+    PGPASSWORD="$POSTGRES_PASSWORD" psql --host $SERVICE_IP --port 5432 -U postgres -d postgres
+
+WARNING: The configured password will be ignored on new installation in case when previous PostgreSQL release was deleted through the helm command. In that case, old PVC will have an old password, and setting it through helm won't take effect. Deleting persistent volumes (PVs) will solve the issue.
+
+WARNING: There are "resources" sections in the chart not set. Using "resourcesPreset" is not recommended for production. For production installations, please set the following values according to your workload needs:
+  - primary.resources
+  - readReplicas.resources
++info https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+
+
+
+[root@lab01 ~]# echo $POSTGRES_PASSWORD
+c7u44Soa67
+
+
+[root@lab01 ~]# export POSTGRES_PASSWORD=$(kubectl get secret --namespace default my-standalone-postgresql -o jsonpath="{.data.postgres-password}" | base64 -d)
+[root@lab01 ~]# echo $POSTGRES_PASSWORD
+QqFp2xy9yB
+[root@lab01 ~]#
+
+[root@lab01 ~]# kubectl get svc my-standalone-postgresql
+NAME                       TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
+my-standalone-postgresql   ClusterIP   10.101.28.108   <none>        5432/TCP   2m56s
+[root@lab01 ~]#
+
+
+host    replication     all             10.101.28.108/32          md5
+
+
+/opt/bitnami/postgresql/conf/pg_hba.conf
+
+sed -i 's/host     all             all        127\.0\.0\.1\/32                 md5/host     all             all        0.0.0.0\/0                 md5/' /opt/bitnami/postgresql/conf/pg_hba.conf
+
+
+primary_conninfo = 'host=10.100.90.198 port=5432 user=replication password=your_password sslmode=prefer'
+
+
+[root@lab01 ~]# kubectl get svc my-postgresql-cluster -o jsonpath='{.spec.clusterIP}'
+10.100.90.198[root@lab01 ~]#
+[root@lab01 ~]# helm install my-standalone-postgresql bitnami/postgresql
+NAME: my-standalone-postgresql
+LAST DEPLOYED: Wed Nov  6 00:38:07 2024
+NAMESPACE: default
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+CHART NAME: postgresql
+CHART VERSION: 16.1.1
+APP VERSION: 17.0.0
+
+** Please be patient while the chart is being deployed **
+
+PostgreSQL can be accessed via port 5432 on the following DNS names from within your cluster:
+
+    my-standalone-postgresql.default.svc.cluster.local - Read/Write connection
+
+To get the password for "postgres" run:
+
+    export POSTGRES_PASSWORD=$(kubectl get secret --namespace default my-standalone-postgresql -o jsonpath="{.data.postgres-password}" | base64 -d)
+
+To connect to your database run the following command:
+
+    kubectl run my-standalone-postgresql-client --rm --tty -i --restart='Never' --namespace default --image docker.io/bitnami/postgresql:17.0.0-debian-12-r9 --env="PGPASSWORD=$POSTGRES_PASSWORD" \
+      --command -- psql --host my-standalone-postgresql -U postgres -d postgres -p 5432
+
+    > NOTE: If you access the container using bash, make sure that you execute "/opt/bitnami/scripts/postgresql/entrypoint.sh /bin/bash" in order to avoid the error "psql: local user with ID 1001} does not exist"
+
+To connect to your database from outside the cluster execute the following commands:
+
+    kubectl port-forward --namespace default svc/my-standalone-postgresql 5432:5432 &
+    PGPASSWORD="$POSTGRES_PASSWORD" psql --host 127.0.0.1 -U postgres -d postgres -p 5432
+
+WARNING: The configured password will be ignored on new installation in case when previous PostgreSQL release was deleted through the helm command. In that case, old PVC will have an old password, and setting it through helm won't take effect. Deleting persistent volumes (PVs) will solve the issue.
+
+WARNING: There are "resources" sections in the chart not set. Using "resourcesPreset" is not recommended for production. For production installations, please set the following values according to your workload needs:
+  - primary.resources
+  - readReplicas.resources
++info https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+[root@lab01 ~]# kubectl get pods -l app.kubernetes.io/instance=my-postgresql-standalone
+No resources found in default namespace.
+[root@lab01 ~]# export POSTGRES_PASSWORD=$(kubectl get secret --namespace default my-standalone-postgresql -o jsonpath="{.data.postgres-password}" | base64 -d)
+[root@lab01 ~]# echo $POSTGRES_PASSWORD
+QqFp2xy9yB
+[root@lab01 ~]# kubectl run my-standalone-postgresql-client --rm --tty -i --restart='Never' --namespace default --image docker.io/bitnami/postgresql:17.0.0-debian-12-r9 --env="PGPASSWORD=$POSTGRES_PASSWORD" \
+      --command -- psql --host my-standalone-postgresql -U postgres -d postgres -p 5432
+If you don't see a command prompt, try pressing enter.
+
+postgres=# \q
+
+echo "primary_conninfo = 'host=10.100.90.198 port=5432 user=replicator password=replicator_password'" >> /opt/bitnami/postgresql/conf/postgresql.conf
+
+primary_conninfo = 'host=10.100.90.198 port=5432 user=replicator password=replicator_password'
+
+kubectl get svc my-postgresql-cluster -o jsonpath='{.spec.clusterIP}'
+[root@lab01 ~]# kubectl delete pod my-standalone-postgresql-0
+pod "my-standalone-postgresql-0" deleted
+[root@lab01 ~]#
+
+postgresql 19:28:28.85 INFO  ==> Welcome to the Bitnami postgresql container
+postgresql 19:28:28.85 INFO  ==> Subscribe to project updates by watching https://github.com/bitnami/containers
+postgresql 19:28:28.85 INFO  ==> Submit issues and feature requests at https://github.com/bitnami/containers/issues
+postgresql 19:28:28.85 INFO  ==> Upgrade to Tanzu Application Catalog for production environments to access custom-configured and pre-packaged software components. Gain enhanced features, including Software Bill of Materials (SBOM), CVE scan result reports, and VEX documents. To learn more, visit https://bitnami.com/enterprise
+postgresql 19:28:28.85 INFO  ==>
+postgresql 19:28:29.05 INFO  ==> ** Starting PostgreSQL setup **
+postgresql 19:28:29.14 INFO  ==> Validating settings in POSTGRESQL_* env vars..
+postgresql 19:28:29.25 INFO  ==> Loading custom pre-init scripts...
+postgresql 19:28:29.35 INFO  ==> Initializing PostgreSQL database...
+postgresql 19:28:29.45 INFO  ==> pg_hba.conf file not detected. Generating it...
+postgresql 19:28:29.45 INFO  ==> Generating local authentication configuration
+postgresql 19:28:29.56 INFO  ==> Deploying PostgreSQL with persisted data...
+postgresql 19:28:29.75 INFO  ==> Configuring replication parameters
+postgresql 19:28:30.05 INFO  ==> Configuring fsync
+postgresql 19:28:30.24 INFO  ==> Configuring synchronous_replication
+postgresql 19:28:30.54 INFO  ==> Loading custom scripts...
+postgresql 19:28:30.55 INFO  ==> Enabling remote connections
+postgresql 19:28:30.65 INFO  ==> ** PostgreSQL setup finished! **
+
+postgresql 19:28:30.76 INFO  ==> ** Starting PostgreSQL **
+2024-11-05 19:28:30.960 GMT [1] LOG:  pgaudit extension initialized
+2024-11-05 19:28:31.052 GMT [1] LOG:  starting PostgreSQL 17.0 on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14) 12.2.0, 64-bit
+2024-11-05 19:28:31.052 GMT [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+2024-11-05 19:28:31.053 GMT [1] LOG:  listening on IPv6 address "::", port 5432
+2024-11-05 19:28:31.055 GMT [1] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2024-11-05 19:28:31.060 GMT [93] LOG:  database system was shut down at 2024-11-05 19:28:27 GMT
+2024-11-05 19:28:31.148 GMT [1] LOG:  database system is ready to accept connections
+
+kubectl get statefulset my-postgresql-cluster -n default -o yaml > my-postgresql-cluster-statefulset.yaml
+
+kubectl create configmap postgresql-config --from-file=postgresql.conf=./postgresql.conf --from-file=pg_hba.conf=./pg_hba.conf
+
+kubectl edit statefulset my-postgresql-cluster -n default
