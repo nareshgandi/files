@@ -1,4 +1,25 @@
 https://chatgpt.com/share/672ae25c-a1a8-8012-8ce2-0014f672f2b1
+https://integralzone.com/kubernetes-configure-postgresql-streaming-replication/
+https://chatgpt.com/share/672b836a-edd4-8003-ab81-27c197b5040a
+
+helm list
+helm delete postgresql-db
+helm repo remove bitnami
+kubectl get pvc
+kubectl delete pvc data-postgresql-db
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm search repo postgresql
+
+
+helm delete my-postgresql-cluster
+
+https://stackoverflow.com/questions/61752126/how-to-create-helm-chart-of-postgres-with-pvc
+
+helm install my-postgresql-cluster bitnami/postgresql --set primary.persistence.enabled=true --set primary.persistence.existingClaim=postgresql-pv-claim --set primary.persistence.storageClass=manual --set volumePermissions.enabled=true
+
+
+
+
 
 
 Step 1: Prepare Your Environment
