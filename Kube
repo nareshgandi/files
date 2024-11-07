@@ -1,4 +1,95 @@
 https://chatgpt.com/share/672baf26-7cc0-8012-9c7a-08407c6257f0
+https://chatgpt.com/share/672cdb3c-2fe8-8003-a566-c0a4d1c7ee23
+
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgresql-replica
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgresql-replica
+  template:
+    metadata:
+      labels:
+        app: postgresql-replica
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:14
+          env:
+            - name: POSTGRES_USER
+              value: "postgres"
+            - name: POSTGRES_PASSWORD
+              value: "postgres"  # Replace with your actual replica password
+            - name: POSTGRES_DB
+              value: "ps_db"
+            - name: PGDATA
+              value: "/var/lib/postgresql/data"
+            - name: PRIMARY_HOST
+              value: "postgresql"  # Service name of primary
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: postgresql-data
+              mountPath: /var/lib/postgresql/data
+          lifecycle:
+            postStart:
+              exec:
+                command: 
+                  - sh
+                  - -c
+                  - |
+                    if [ ! -f /var/lib/postgresql/data/standby.signal ]; then
+                      echo "Replication setup started";
+                      until pg_basebackup -h ${POSTGRES_PRIMARY_HOST}  -D /var/lib/postgresql/data -Fp -Xs -P -R -W; do
+                        echo "Waiting for primary to be ready...";
+                        sleep 10;
+                      done
+                      echo "Replication setup complete";
+                    else
+                      echo "Standby already initialized. Skipping pg_basebackup.";
+                    fi
+      initContainers:
+        - name: pg-basebackup
+          image: postgres:14
+          command:
+            - /bin/bash
+            - -c
+            - |
+              echo "Cleaning up data directory before replication...";
+              rm -rf /var/lib/postgresql/data/*;
+              echo "Starting pg_basebackup from primary...";
+              until pg_basebackup -U postgres -D /var/lib/postgresql/data2 -h 10.244.0.12 --checkpoint=fast -R; do
+                echo "Retrying pg_basebackup in 10 seconds...";
+                sleep 10;
+              done
+              echo "pg_basebackup complete";
+          env:
+            - name: PGPASSWORD
+              value: "your_replica_password"  # Replica password for primary connection
+          volumeMounts:
+            - name: postgresql-data
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: postgresql-data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgresql-replica
+spec:
+  type: LoadBalancer
+  selector:
+    app: postgresql-replica
+  ports:
+    - port: 5432
+      targetPort: 5432
+
+
 
 
 Instructions 
