@@ -4,6 +4,9 @@ https://chatgpt.com/share/672cdb3c-2fe8-8003-a566-c0a4d1c7ee23
 https://chatgpt.com/share/672baf26-7cc0-8012-9c7a-08407c6257f0
 
 
+https://chatgpt.com/share/67606abf-cce4-8003-8b38-982a6f394e8f
+
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
